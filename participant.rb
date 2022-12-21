@@ -1,11 +1,21 @@
-require_relative 'Actor'
+require_relative 'actor'
 
 class Participant < Actor
   @all = []
 
-  def initialize(pass_count)
-    super
+  class << self
+    attr_reader :all
+
+    protected
+
+    attr_writer :all
+  end
+
+  attr_reader :pass_count
+
+  def initialize(name, pass_count = 0)
+    super(name)
     @pass_count = pass_count
-    @all << self
+    self.class.all << self
   end
 end

@@ -76,6 +76,3 @@ class Card
     Card.new(value[:name], value[:value])
   end
 end
-
-# Card::BASIC_CARDS.each { |key, val| puts "#{key} #{val}"}
-# Card.all.each { |card| puts "#{card.name} #{card.value}" }
