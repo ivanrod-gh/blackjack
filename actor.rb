@@ -24,7 +24,7 @@ class Actor
 
   def initialize(name, money = 0)
     @name = name
-    @hand = Hand.new
+    @hand = []
     @money = money
     self.class.all << self
   end

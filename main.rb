@@ -1,4 +1,5 @@
 require_relative 'participant'
+require_relative 'card'
 
 # def user_interface
 #   loop do
@@ -82,10 +83,11 @@ def create_default_data
 end
 
 def assign_defalut_variables
-  $actors[:dealer].money = 100
-  $actors[:player].money = 100
-  $actors[:dealer].pass_count = 1
-  $actors[:player].pass_count = 1
+  $actors.each { |_, actor| actor.money = 100 if actor.class == Participant}
+  $actors.each { |_, actor| actor.pass_count = 1 if actor.class == Participant}
+  Card.all.each { |card| $actors[:bank].hand << card }
+  $actors[:bank].hand.shuffle!
+  p $actors
 end
 
 def game_menu_show
