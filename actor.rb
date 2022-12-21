@@ -1,5 +1,3 @@
-require_relative 'hand'
-
 class Actor
   @all = []
 

@@ -22,42 +22,46 @@ puts "Hello, #{$user_name}! Lets begin"
 
 def user_interface
   loop do
-    main_menu_show
+    menu_show(MAIN_MENU)
     main_menu_user_item_select = gets.to_i
-    break if main_menu_process_user_choise(main_menu_user_item_select) == "exit"
+    break if menu_process_user_choise(MAIN_MENU, main_menu_user_item_select, 99) == "exit"
   end
 end
 
-def main_menu_show
+def menu_show(reference_to_menu)
   puts "=" * 10
-  MAIN_MENU.each { |key, item| puts format_message(key, item[:description]) }
+  reference_to_menu.each { |key, item| puts format_message(key, item[:description]) if key.class == Integer }
 end
 
 def format_message(integer, string)
   format("%<integer>d  %<string>s", { integer: integer, string: string })
 end
 
-def main_menu_process_user_choise(menu_item)
+def menu_process_user_choise(reference_to_menu, menu_item, exit_item_number)
   case menu_item
-  when 1..13
-    main_menu_execute(menu_item)
-  when 99
-    puts "=" * 10
-    puts "The programm will be terminated"
-    "exit"
+  when 1..reference_to_menu.size - 1
+    menu_execute(reference_to_menu, menu_item)
+  when exit_item_number
+    response_to_user_choose_exit(reference_to_menu)
   end
 end
 
-def main_menu_execute(key)
-  MAIN_MENU[key][:reference].call
+def response_to_user_choose_exit(reference_to_menu)
+  puts reference_to_menu[:exit][:description]
+  reference_to_menu[:exit][:reference].call unless reference_to_menu[:exit][:reference].nil?
+  reference_to_menu[:exit][:action]
+end
+
+def menu_execute(reference_to_menu, key)
+  reference_to_menu[key][:reference].call
 end
 
 def start_new_game
   prepare_new_game
   loop do
-    game_menu_show
-    game_menu_user_item_select = gets.to_i
-    break if game_menu_process_user_choise(game_menu_user_item_select) == "exit"
+    menu_show(GAME_MENU)
+    main_menu_user_item_select = gets.to_i
+    break if menu_process_user_choise(GAME_MENU, main_menu_user_item_select, 91) == "exit"
   end
 end
 
@@ -70,7 +74,6 @@ end
 def erase_old_data
   Actor.erase_all_instances('new_game')
   Participant.erase_all_instances('new_game')
-  Hand.erase_all_instances('new_game')
   $actors = {}
 end
 
@@ -87,29 +90,17 @@ def assign_defalut_variables
   $actors.each { |_, actor| actor.pass_count = 1 if actor.class == Participant}
   Card.all.each { |card| $actors[:bank].hand << card }
   $actors[:bank].hand.shuffle!
-  p $actors
+  # p $actors
 end
 
-def game_menu_show
-  puts "=" * 10
-  GAME_MENU.each { |key, item| puts format_message(key, item[:description]) }
-end
-
-def game_menu_process_user_choise(menu_item)
-  case menu_item
-  when 1..13
-    game_menu_execute(menu_item)
-  when 91
-    puts "Back to main menu"
-    "exit"
+def start_new_round
+  prepare_new_game
+  loop do
+    menu_show(ROUND_MENU)
+    main_menu_user_item_select = gets.to_i
+    break if menu_process_user_choise(ROUND_MENU, main_menu_user_item_select, 91) == "exit"
   end
 end
-
-def game_menu_execute(key)
-  GAME_MENU[key][:reference].call
-end
-
-
 
 
 
@@ -123,19 +114,26 @@ MAIN_MENU = {
     description: 'Start a new game',
     reference: method(:start_new_game)
   },
-  99 => { description: 'Close Game' }
+  99 => { description: 'Close Game' },
+  exit: { description: "=" * 10 + "\nThe programm will be terminated", action: 'exit' }
 }.freeze
 
 GAME_MENU = {
   1 => {
-    description: 'some item 1',
-    reference: method(:start_new_game)
+    description: 'Start a new round',
+    reference: method(:start_new_round)
   },
-  91 => {
-    description: 'To main menu',
-    reference: :return
-  }
+  91 => { description: 'To main menu' },
+  exit: { description: "=" * 10 + "\nBack to main menu", action: 'exit' }
 }.freeze
 
+ROUND_MENU = {
+  1 => {
+    description: 'some item 1',
+    reference: method(:start_new_round)
+  },
+  91 => { description: 'To game menu' },
+  exit: { description: "=" * 10 + "\nBack to game menu", action: 'exit' }
+}.freeze
 
 user_interface
