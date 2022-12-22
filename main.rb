@@ -174,63 +174,12 @@ def round_ask_show_cards
 end
 
 def calculate_pc_turn
-  cards_value = calculate_cards_value($actors[:dealer])
+  p cards_value = $actors[:dealer].calculate_cards_value
 end
 
-def calculate_cards_value(actor)
-  cards_value = 0
-  case hand_has_ace_card?(actor.hand)
-  when true
-    puts "true"
-    p cards_value = advanced_calculate_cards_value(actor.hand)
-  when false
-    puts "false"
-    cards_value = simple_calculate_cards_value(actor.hand)
-  end
 
-  # actor.hand.each { |card| cards_value += object.value }
 
-  # cards_value
-end
 
-def hand_has_ace_card?(hand)
-  hand.each do |card|
-    return true if card.name.include?('A')
-  end
-  false
-end
-
-def simple_calculate_cards_value(hand)
-  cards_value = 0
-  hand.each { |card| cards_value += card.value }
-  cards_value
-end
-
-def advanced_calculate_cards_value(hand)
-  cards_value = 0
-  hand.each { |card| cards_value += card.value unless card.name.include?('A') }
-  cards_values = [cards_value]
-  hand.each do |card|
-    if card.name.include?('A')
-      temp_card_values = []
-      cards_values.each do |value|
-        temp_card_values << value + card.value[:first]
-        temp_card_values << value + card.value[:second]
-      end
-      cards_values = temp_card_values
-    end
-  end
-  cards_values.uniq!
-  # p cards_value
-  # p cards_values
-  cards_value = cards_values[0]
-  cards_values.shift
-  cards_values.each do |value|
-    cards_value = value if value <= 21
-  end
-  p cards_value
-  cards_value
-end
 
 
 
