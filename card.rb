@@ -60,10 +60,10 @@ class Card
     king_diamonds: { name: 'K<3', value: 10 },
     king_spades: { name: 'K^', value: 10 },
     king_clubs: { name: 'K+', value: 10 },
-    ace_hearts: { name: 'A<>', value: [1, 11] },
-    ace_diamonds: { name: 'A<3', value: [1, 11] },
-    ace_spades: { name: 'A^', value: [1, 11] },
-    ace_clubs: { name: 'A+', value: [1, 11] }
+    ace_hearts: { name: 'A<>', value: { first: 1, second: 11 } },
+    ace_diamonds: { name: 'A<3', value: { first: 1, second: 11 } },
+    ace_spades: { name: 'A^', value: { first: 1, second: 11 } },
+    ace_clubs: { name: 'A+', value: { first: 1, second: 11 } }
   }.freeze
 
   def initialize(name, value)

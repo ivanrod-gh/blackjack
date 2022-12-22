@@ -93,10 +93,14 @@ def round_interface
   erase_old_round_data
   assign_default_round_variables
   loop do
+  p $actors[:dealer]
+  p $actors[:player]
     show_user_cards
     round_menu_show(ROUND_MENU)
     main_menu_user_item_select = gets.to_i
     break if menu_process_user_choise(ROUND_MENU, main_menu_user_item_select, 91) == "exit"
+    calculate_pc_turn
+    # p $decisions
   end
 end
 
@@ -110,7 +114,7 @@ def assign_default_round_variables
   $actors[:bank].hand.shuffle!
   $actors.each do |_, actor|
     if actor.class == Participant
-      2.times { actor.get_cards_from_bank($actors[:bank]) }
+      8.times { actor.get_cards_from_bank($actors[:bank]) }
     end
   end
   $actors.each { |_, actor| actor.pass_count = 1 if actor.class == Participant}
@@ -169,8 +173,64 @@ def round_ask_show_cards
   $decisions = {user_choise: :show_cards}
 end
 
+def calculate_pc_turn
+  cards_value = calculate_cards_value($actors[:dealer])
+end
 
+def calculate_cards_value(actor)
+  cards_value = 0
+  case hand_has_ace_card?(actor.hand)
+  when true
+    puts "true"
+    p cards_value = advanced_calculate_cards_value(actor.hand)
+  when false
+    puts "false"
+    cards_value = simple_calculate_cards_value(actor.hand)
+  end
 
+  # actor.hand.each { |card| cards_value += object.value }
+
+  # cards_value
+end
+
+def hand_has_ace_card?(hand)
+  hand.each do |card|
+    return true if card.name.include?('A')
+  end
+  false
+end
+
+def simple_calculate_cards_value(hand)
+  cards_value = 0
+  hand.each { |card| cards_value += card.value }
+  cards_value
+end
+
+def advanced_calculate_cards_value(hand)
+  cards_value = 0
+  hand.each { |card| cards_value += card.value unless card.name.include?('A') }
+  cards_values = [cards_value]
+  hand.each do |card|
+    if card.name.include?('A')
+      temp_card_values = []
+      cards_values.each do |value|
+        temp_card_values << value + card.value[:first]
+        temp_card_values << value + card.value[:second]
+      end
+      cards_values = temp_card_values
+    end
+  end
+  cards_values.uniq!
+  # p cards_value
+  # p cards_values
+  cards_value = cards_values[0]
+  cards_values.shift
+  cards_values.each do |value|
+    cards_value = value if value <= 21
+  end
+  p cards_value
+  cards_value
+end
 
 
 
@@ -228,5 +288,3 @@ ROUND_MENU = {
 #to game menu
 
 main_interface
-
-
