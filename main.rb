@@ -22,27 +22,67 @@ puts "Hello, #{$user_name}! Lets begin"
 
 def main_interface
   loop do
-    menu_show(MAIN_MENU)
-    main_menu_user_item_select = gets.to_i
-    break if menu_process_user_choise(MAIN_MENU, main_menu_user_item_select, 99) == "exit"
+    shown_items_numbers = menu_show(MAIN_MENU)
+    menu_user_item_select = gets.to_i
+    break if menu_process_user_choise(MAIN_MENU, menu_user_item_select, shown_items_numbers, 99) == "exit"
+  rescue
   end
 end
 
 def menu_show(reference_to_menu)
   puts "=" * 10
-  reference_to_menu.each { |key, item| puts format_message(key, item[:description]) if key.class == Integer }
+  shown_items_numbers = []
+  reference_to_menu.each do |key, item|
+    if key.class == Integer
+      puts format_message(key, item[:description])
+      shown_items_numbers.push(key)
+    end
+  end
+  shown_items_numbers
 end
+
+
+
+
+
+# def round_menu_show(reference_to_menu)
+#   puts "=" * 10
+#   shown_items_numbers = []
+#   # reference_to_menu.each { |key, item| puts format_message(key, item[:description]) if key.class == Integer }
+#   shown_items_numbers.push(menu_item_show(reference_to_menu, 1)) if $actors[:player].pass_count > 0
+#   shown_items_numbers.push(menu_item_show(reference_to_menu, 2)) if $actors[:player].hand.size < 3
+#   shown_items_numbers.push(menu_item_show(reference_to_menu, 3))
+#   shown_items_numbers
+# end
+
+
+
+
+
+
+
+
 
 def format_message(integer, string)
   format("%<integer>d  %<string>s", { integer: integer, string: string })
 end
 
-def menu_process_user_choise(reference_to_menu, menu_item, exit_item_number)
-  case menu_item
-  when 1..reference_to_menu.size - 2
-    menu_execute(reference_to_menu, menu_item)
-  when exit_item_number
+def menu_process_user_choise(reference_to_menu, menu_item, shown_items_numbers, exit_item_number)
+  # case menu_item
+  # when 1..reference_to_menu.size - 2
+  #   menu_execute(reference_to_menu, menu_item)
+  # when exit_item_number
+  #   response_to_user_choose_exit(reference_to_menu)
+  # end
+  # puts menu_item
+  # p shown_items_numbers
+
+  if menu_item == exit_item_number
     response_to_user_choose_exit(reference_to_menu)
+  elsif shown_items_numbers.include?(menu_item)
+    menu_execute(reference_to_menu, menu_item)
+  else
+    raise
   end
 end
 
@@ -59,9 +99,10 @@ end
 def game_interface
   prepare_new_game
   loop do
-    menu_show(GAME_MENU)
-    main_menu_user_item_select = gets.to_i
-    break if menu_process_user_choise(GAME_MENU, main_menu_user_item_select, 91) == "exit"
+    shown_items_numbers = menu_show(GAME_MENU)
+    menu_user_item_select = gets.to_i
+    break if menu_process_user_choise(GAME_MENU, menu_user_item_select, shown_items_numbers, 91) == "exit"
+  rescue
   end
 end
 
@@ -92,14 +133,24 @@ end
 def round_interface
   erase_old_round_data
   assign_default_round_variables
+  take_bet
   loop do
-  p $actors[:dealer]
-  p $actors[:player]
-    show_user_cards
-    round_menu_show(ROUND_MENU)
-    main_menu_user_item_select = gets.to_i
-    break if menu_process_user_choise(ROUND_MENU, main_menu_user_item_select, 91) == "exit"
+
+    show_cards($actors[:player])
+    shown_items_numbers = round_menu_show(ROUND_MENU)
+    menu_user_item_select = gets.to_i
+    puts "smthin"
+    break if menu_process_user_choise(ROUND_MENU, menu_user_item_select, shown_items_numbers, 91) == "exit"
+    puts "calv"
     calculate_pc_turn
+
+    puts "bank money: #{$actors[:bank].money}"
+    p $actors[:dealer]
+    p $actors[:player]
+    p $decisions
+  rescue
+    # perform_planned_actions
+    # calculate_results
     # p $decisions
   end
 end
@@ -114,24 +165,38 @@ def assign_default_round_variables
   $actors[:bank].hand.shuffle!
   $actors.each do |_, actor|
     if actor.class == Participant
-      8.times { actor.get_cards_from_bank($actors[:bank]) }
+      2.times { actor.get_cards_from_bank($actors[:bank]) }
     end
   end
   $actors.each { |_, actor| actor.pass_count = 1 if actor.class == Participant}
   # p $actors
 end
 
-def show_user_cards
-  show_cards_horizontally($actors[:player].hand)
+def take_bet
+  raise "No money to proceed!" if $actors[:player].money.zero? || $actors[:player].money.zero?
+  $actors.each { |_, actor| actor.make_bet($actors[:bank]) if actor.class == Participant}
 end
 
-def show_cards_horizontally(cards_array)
-  puts "Your cards:"
-  create_first_card_image_line(cards_array.size)
-  create_second_card_image_line(cards_array.size)
-  create_central_card_image_line(cards_array)
-  create_second_card_image_line(cards_array.size)
-  create_first_card_image_line(cards_array.size)
+def show_cards(actor)
+  show_cards_horizontally(actor, actor.hand)
+end
+
+def show_cards_horizontally(actor, cards)
+  show_message_corresponding_shown_cards(actor)
+  create_first_card_image_line(cards.size)
+  create_second_card_image_line(cards.size)
+  create_central_card_image_line(cards)
+  create_second_card_image_line(cards.size)
+  create_first_card_image_line(cards.size)
+end
+
+def show_message_corresponding_shown_cards(actor)
+  case actor.name.include?('Deal')
+  when true
+    puts "Dealer cards:"
+  when false
+    puts "Your cards:"
+  end
 end
 
 def create_first_card_image_line(repeat_count)
@@ -155,28 +220,62 @@ end
 
 def round_menu_show(reference_to_menu)
   puts "=" * 10
+  shown_items_numbers = []
   # reference_to_menu.each { |key, item| puts format_message(key, item[:description]) if key.class == Integer }
-  puts format_message(1, reference_to_menu[1][:description]) if $actors[:player].pass_count > 0
-  puts format_message(2, reference_to_menu[2][:description]) if $actors[:player].hand.size < 3
-  puts format_message(3, reference_to_menu[3][:description])
+  shown_items_numbers.push(menu_item_show(reference_to_menu, 1)) if $actors[:player].pass_count > 0
+  shown_items_numbers.push(menu_item_show(reference_to_menu, 2)) if $actors[:player].hand.size < 3
+  shown_items_numbers.push(menu_item_show(reference_to_menu, 3))
+  shown_items_numbers.push(menu_item_show(reference_to_menu, 91))
+  shown_items_numbers
 end
 
+def menu_item_show(reference_to_menu, item_number)
+  puts format_message(item_number, reference_to_menu[item_number][:description])
+  item_number
+end
+
+
+
+
+
+
+def safe_user_select_item_number_from_items(shown_items_numbers)
+  user_choise = gets.to_i
+  raise unless shown_items_numbers.include?(user_choise)
+
+  user_choise
+end
+
+
+
+
+
+
 def user_passed
-  $decisions = {user_choise: :pass}
+    $decisions[:user_choise] = :pass
 end
 
 def user_ask_extra_card
-  $decisions = {user_choise: :extra_card}
+    $decisions[:user_choise] = :extra_card
 end
 
 def round_ask_show_cards
-  $decisions = {user_choise: :show_cards}
+    $decisions[:user_choise] = :show_cards
 end
 
 def calculate_pc_turn
   p cards_value = $actors[:dealer].calculate_cards_value
+  calculate_pc_desicion(cards_value)
+  $decisions
 end
 
+def calculate_pc_desicion(cards_value)
+  if cards_value < 17
+    $decisions[:dealer_choise] = :extra_card
+  elsif cards_value >= 18
+    $decisions[:dealer_choise] = :pass
+  end
+end
 
 
 

@@ -27,6 +27,11 @@ class Participant < Actor
     self.class.all << self
   end
 
+  def make_bet(bank)
+    @money -= BET_SIZE
+    bank.take_bet
+  end
+
   def calculate_cards_value
     case hand_has_ace_card?
     when true
@@ -52,39 +57,38 @@ class Participant < Actor
   end
 
   def advanced_calculate_cards_value
-    cards_value = simple_calculate_non_ace_cards_value
-    cards_values = [cards_value]
-    cards_values = process_non_ace_cards_values(cards_values)
-    calculate_total_cards_value(cards_values)
+    non_ace_value = simple_calculate_non_ace_cards_value
+    values = mix_non_ace_and_ace_values([non_ace_value])
+    calculate_total_cards_value(values)
   end
 
   def simple_calculate_non_ace_cards_value
-    cards_value = 0
-    @hand.each { |card| cards_value += card.value unless card.name.include?('A') }
-    cards_value
+    non_ace_value = 0
+    @hand.each { |card| non_ace_value += card.value unless card.name.include?('A') }
+    non_ace_value
   end
 
-  def process_non_ace_cards_values(cards_values)
+  def mix_non_ace_and_ace_values(values)
     @hand.each do |card|
-      cards_values = calculate_non_ace_cards_values(card, cards_values) if card.name.include?('A')
+      values = calculate_ace_from_non_ace_values(card, values) if card.name.include?('A')
     end
-    cards_values.uniq
+    values.uniq
   end
 
-  def calculate_non_ace_cards_values(card, cards_values)
-    temp_card_values = []
-    cards_values.each do |value|
-      temp_card_values << value + card.value[:first]
-      temp_card_values << value + card.value[:second]
+  def calculate_ace_from_non_ace_values(card, values)
+    temp_values = []
+    values.each do |value|
+      temp_values << value + card.value[:first]
+      temp_values << value + card.value[:second]
     end
-    temp_card_values
+    temp_values
   end
 
-  def calculate_total_cards_value(cards_values)
-    # p cards_values
-    cards_value = cards_values[0]
-    cards_values.shift
-    cards_values.each do |value|
+  def calculate_total_cards_value(values)
+    # p values
+    cards_value = values[0]
+    values.shift
+    values.each do |value|
       cards_value = value if value <= 21
     end
     # p cards_value

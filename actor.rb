@@ -1,4 +1,6 @@
 class Actor
+  BET_SIZE = 10
+
   @all = []
 
   class << self
@@ -37,6 +39,10 @@ class Actor
 
   def get_cards_from_bank(bank)
     get_cards_from_bank!(bank)
+  end
+
+  def take_bet
+    @money += BET_SIZE
   end
 
   protected
