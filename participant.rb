@@ -1,23 +1,9 @@
+# frozen_string_literal: true
+
 require_relative 'actor'
 
 class Participant < Actor
   @all = []
-
-  class << self
-    attr_reader :all
-
-    def erase_all_instances(key)
-      erase_all_instances! if key == 'new_game'
-    end
-
-    protected
-
-    attr_writer :all
-
-    def erase_all_instances!
-      instance_variable_set(:@all, [])
-    end
-  end
 
   attr_accessor :pass_count
 
@@ -28,7 +14,8 @@ class Participant < Actor
   end
 
   def make_bet(bank)
-    raise "#{@name} doesn\'t have enough money!" if @money == 0
+    raise "#{@name} doesn\'t have enough money!" if @money.zero?
+
     @money -= BET_SIZE
     bank.take_bet
   end
@@ -40,10 +27,8 @@ class Participant < Actor
   def calculate_cards_value
     case hand_has_ace_card?
     when true
-      # puts "true"
       advanced_calculate_cards_value
     when false
-      # puts "false"
       simple_calculate_cards_value
     end
   end
@@ -90,13 +75,11 @@ class Participant < Actor
   end
 
   def calculate_total_cards_value(values)
-    # p values
     cards_value = values[0]
     values.shift
     values.each do |value|
       cards_value = value if value <= 21
     end
-    # p cards_value
     cards_value
   end
 end

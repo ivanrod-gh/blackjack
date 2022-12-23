@@ -1,7 +1,9 @@
+# frozen_string_literal: true
+
 require_relative 'all'
 
 class Actor
-  self.singleton_class.include All
+  singleton_class.include All
 
   BET_SIZE = 10
   INITIAL_MONEY = 100
@@ -15,6 +17,7 @@ class Actor
     @name = name
     @hand = []
     @money = money
+    validate!
     self.class.all << self
   end
 
@@ -22,8 +25,8 @@ class Actor
     erase_hand!
   end
 
-  def get_all_cards
-    get_all_cards!
+  def accumulate_all_cards
+    accumulate_all_cards!
   end
 
   def get_cards_from_bank(bank)
@@ -35,26 +38,33 @@ class Actor
   end
 
   def give_prize(participant)
-    raise "Prize calling for invalid target!" unless participant.class == Participant
-    raise "There is no more money in Bank!" if @money == 0
+    raise "Prize calling for invalid target!" unless participant.instance_of?(Participant)
+    raise "There is no more money in Bank!" if @money.zero?
+
     @money -= BET_SIZE
     participant.take_prize
   end
 
   protected
 
+  def validate!
+    raise "Name must have at least 3 characters!" if @name.length < 3
+    raise "Money must be integer!" unless @money.instance_of?(Integer)
+  end
+
   def erase_hand!
     @hand = []
   end
 
-  def get_all_cards!
-    raise "Method called for non-bank actor!" unless self.name.include?('Bank')
-    Card.all.each { |card| self.hand << card }
+  def accumulate_all_cards!
+    raise "Method called for non-bank actor!" unless name.include?('Bank')
+
+    Card.all.each { |card| hand << card }
   end
 
   def get_cards_from_bank!(bank)
     card = bank.hand[0]
-    self.hand << card
+    hand << card
     bank.hand.delete(card)
   end
 end

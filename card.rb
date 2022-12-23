@@ -1,17 +1,11 @@
+# frozen_string_literal: true
+
 require_relative 'all'
 
 class Card
-  self.singleton_class.include All
-  
+  singleton_class.include All
+
   @all = []
-
-  class << self
-    attr_reader :all
-
-    protected
-
-    attr_writer :all
-  end
 
   attr_reader :name, :value
 

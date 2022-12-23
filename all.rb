@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module All
   attr_reader :all
 
