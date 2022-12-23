@@ -1,6 +1,6 @@
 Black Jack
 
-This is the Black Jack game (some variation).
+This is the Black Jack game (some kind of variation).
 
 Rules:
 At the game start player (user) must input his name. Only one player allowed. Player and  dealer (Bank) has a 100 coins at the beginning of the game.
