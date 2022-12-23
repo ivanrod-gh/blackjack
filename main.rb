@@ -9,17 +9,11 @@ def input_user_name
   puts "Please, enter your name (minimum 3 characters without digits and spaces):"
   loop do
     $user_name = gets.chomp.capitalize
-    # $user_name = 'Player'
-    # if $user_name =~ /[a-z]{3,}/i
-    #   break
-    # else
-    #   puts "Invalid name format. Please try again"
-    # end
     $user_name =~ /^[a-z]{3,}$/i ? break : (puts "Invalid name format. Please try again")
   end
   system 'clear'
   puts "Hello, #{$user_name}! Lets begin"
-  sleep(1)
+  sleep(0.5)
 end
 
 def main_interface
@@ -29,7 +23,8 @@ def main_interface
     shown_items_numbers = menu_show(MAIN_MENU)
     menu_player_select_and_execute(MAIN_MENU, shown_items_numbers, exit_item_number = 99)
     break if break_was_called
-  # rescue
+  rescue
+    retry
   end
 end
 
@@ -73,7 +68,6 @@ end
 
 def break_was_called
   if $menu == 'exit'
-    puts "called_break"
     $menu = ''
     return true
   end
@@ -91,12 +85,13 @@ def game_interface
     shown_items_numbers = game_menu_show(GAME_MENU)
     menu_player_select_and_execute(GAME_MENU, shown_items_numbers, exit_item_number = 91)
     break if break_was_called
-  # rescue
+  rescue
+    retry
   end
 end
 
 def prepare_new_game
-  puts "At the beginning you and the Bank have 100 coins"
+  puts "At the beginning you and the Bank have #{Actor::INITIAL_MONEY} coins"
   sleep(0.25)
   erase_old_data
   create_default_game_data
@@ -121,12 +116,9 @@ def assign_defalut_game_variables
   $actors.each { |_, actor| actor.money = Actor::INITIAL_MONEY if actor.class == Participant}
 end
 
-
-
 def game_menu_show(reference_to_menu)
   puts "=" * 10
   shown_items_numbers = []
-  # $actors[:player].money > 0 ? shown_items_numbers.push(menu_item_show(reference_to_menu, 1)) : (puts "-")
   shown_items_numbers.push(menu_item_show(reference_to_menu, 1)) if all_participant_have_money
   shown_items_numbers.push(menu_item_show(reference_to_menu, 2))
   shown_items_numbers.push(menu_item_show(reference_to_menu, 91))
@@ -157,17 +149,12 @@ end
 def round_interface
   preparations_before_rounds
   loop do
-    process_new_round_default_actions
-    shown_items_numbers = round_menu_show(ROUND_MENU)
-    menu_player_select_and_execute(ROUND_MENU, shown_items_numbers, exit_item_number = 91)
+    process_new_round_common_actions
     break if break_was_called
     proceed_user_choise
-    # puts "bank money: #{$actors[:bank].money}"
-    # p $decisions
     break if break_was_called
-    # p $actors[:dealer]
-    # p $actors[:player]
-  # rescue
+  rescue
+    retry
   end
 end
 
@@ -190,9 +177,7 @@ def assign_default_round_variables
       2.times { actor.get_cards_from_bank($actors[:bank]) }
     end
   end
-  # $actors.each { |_, actor| actor.pass_count = 1 if actor.class == Participant}
   $actors[:player].pass_count = 1
-  # p $actors
 end
 
 def take_bet
@@ -200,10 +185,12 @@ def take_bet
   $actors.each { |_, actor| actor.make_bet($actors[:bank]) if actor.class == Participant}
 end
 
-def process_new_round_default_actions
-  sleep(0.25)
+def process_new_round_common_actions
+  # sleep(0.25)
   show_participants_cards(:closed, :open)
   $decisions = {}
+  shown_items_numbers = round_menu_show(ROUND_MENU)
+  menu_player_select_and_execute(ROUND_MENU, shown_items_numbers, exit_item_number = 91)
 end
 
 def show_participants_cards(condition_for_dealer, condition_for_player)
@@ -283,13 +270,11 @@ end
 
 def proceed_user_choise
   calculate_pc_turn unless $decisions[:player] == :show_cards
-  p $decisions
   proceed_actors_decisions
 end
 
 def calculate_pc_turn
   cards_value = $actors[:dealer].calculate_cards_value
-  puts "pc cards value = #{cards_value}"
   calculate_pc_decision(cards_value)
   $decisions
 end
@@ -309,31 +294,21 @@ end
 
 def process_decisions_than_continue_game
   $decisions.each do |actor, decision|
-    # if actor == known_actor && decision == :pass
     case decision
     when :pass
       $actors[actor].pass_count -= 1 if actor == :player
-      puts "actor #{actor}, pass_count=[#{$actors[actor].pass_count}]"
     when :extra_card
       $actors[actor].get_cards_from_bank($actors[:bank])
-      puts "actor #{actor}, card_count=[#{$actors[actor].hand.size}]"
-    # when :show_cards
-    #   puts "show_cards"
     end
   end
 end
 
 def process_round_conditions
-  # user_cards_value = $actors[:player].calculate_cards_value
-  # pc_cards_value = $actors[:dealer].calculate_cards_value
-
   calculate_round_ending if $decisions[:player] == :show_cards
   calculate_round_ending if $actors[:player].hand.size == 3
 end
 
 def calculate_round_ending
-  sleep(0.25)
-  puts "calculate_round_ending".upcase
   pc_cards_value = $actors[:dealer].calculate_cards_value
   user_cards_value = $actors[:player].calculate_cards_value
   result = calculate_winner(pc_cards_value, user_cards_value)
@@ -351,10 +326,8 @@ def calculate_winner(pc_cards_value, user_cards_value)
 end
 
 def announce_winner(pc_cards_value, user_cards_value, result)
-  # puts "announce_winner".upcase
   show_participants_cards(:open, :open)
-  puts "pc_cards_value=#{pc_cards_value}"
-  puts "user_cards_value=#{user_cards_value}"
+  sleep(0.5)
   show_winner_or_draw(result)
   proceed_money_transfer(result)
   show_result_for_user(result)
@@ -364,28 +337,25 @@ end
 def show_winner_or_draw(result)
   case result
   when :draw
-    puts "Round draw!"
+    puts "\nRound draw!"
+  when :dealer
+    puts "\n#{$actors[result].name} wins!"
   else
-    puts "Round ended! Winner is - #{$actors[result].name}!"
+    puts "\nRound ended! Winner is - #{$actors[result].name}!"
   end
 end
 
 def proceed_money_transfer(result)
-  # proceed_participant_money($actors[:dealer], result)
-  # proceed_participant_money($actors[:player], result)
   $actors.each { |_, actor| proceed_participant_money(actor, result) if actor.class == Participant}
 end
 
 def proceed_participant_money(actor, result)
   case result
   when :draw
-    puts "draw on #{actor.inspect}"
     $actors[:bank].give_prize(actor)
   when :player
-    puts "player on #{actor.inspect}"
     2.times { $actors[:bank].give_prize(actor) if actor == $actors[:player] }
   when :dealer
-    puts "dealer on #{actor.inspect}"
     2.times { $actors[:bank].give_prize(actor) if actor == $actors[:dealer] }
   end
 end
@@ -393,12 +363,12 @@ end
 def show_result_for_user(result)
   case result
   when :draw
-    puts "You get your money back and now have #{$actors[:player].money} coins"
+    puts "\nYou get your money back and now you have #{$actors[:player].money} coins"
   when :player
-    puts "You increase your money and now have #{$actors[:player].money} coins"
+    puts "\nYou increase your money and now you have #{$actors[:player].money} coins"
     puts "Now you get the whole bank\'s money!" if $actors[:dealer].money == 0
   when :dealer
-    puts "You lose your bet and now have #{$actors[:player].money} coins"
+    puts "\nYou lose your bet and now you have #{$actors[:player].money} coins"
     puts "Now you have no money to proceed!" if $actors[:player].money == 0
   end
 end
@@ -407,8 +377,6 @@ def show_status
   puts " Name: #{$actors[:player].name}"
   puts " Money: #{$actors[:player].money}"
   puts " In Bank: #{$actors[:dealer].money}"
-
-  puts "////bank: #{$actors[:bank].money}"
 end
 
 def user_quit_round
@@ -419,12 +387,6 @@ def user_quit_round
   $menu = 'exit'
   sleep(1)
 end
-
-
-
-
-
-
 
 MAIN_MENU = {
   1 => {
@@ -440,13 +402,8 @@ MAIN_MENU = {
     reference: method(:input_user_name)
   },
   99 => { description: 'Close programm' },
-  exit: { description: "=" * 10 + "\nThe programm will be terminated", action: 'exit' }
+  exit: { description: "The programm will be terminated", action: 'exit' }
 }.freeze
-
-#start new game
-#change name
-#show records
-#exit game
 
 GAME_MENU = {
   1 => {
@@ -464,10 +421,6 @@ GAME_MENU = {
     action: 'exit'
   }
 }.freeze
-
-#start new round
-#show balance
-#to main menu
 
 ROUND_MENU = {
   1 => {
@@ -489,12 +442,7 @@ ROUND_MENU = {
     action: 'exit' }
 }.freeze
 
-#pass
-#get card
-#open cards
-#to game menu
-
 main_interface
+
 sleep(1.5)
 system 'clear'
-
