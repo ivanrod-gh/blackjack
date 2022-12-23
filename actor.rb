@@ -45,6 +45,13 @@ class Actor
     @money += BET_SIZE
   end
 
+  def give_prize(participant)
+    raise "Prize calling for invalid target!" unless participant.class == Participant
+    raise "There is no more money in Bank!" if @money == 0
+    @money -= BET_SIZE
+    participant.take_prize
+  end
+
   protected
 
   def erase_hand!

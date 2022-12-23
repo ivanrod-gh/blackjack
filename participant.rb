@@ -32,6 +32,10 @@ class Participant < Actor
     bank.take_bet
   end
 
+  def take_prize
+    @money += BET_SIZE
+  end
+
   def calculate_cards_value
     case hand_has_ace_card?
     when true
