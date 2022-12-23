@@ -1,27 +1,35 @@
 require_relative 'participant'
 require_relative 'card'
 
+system 'clear'
 puts "The Black Jack programm\n"
-puts "Welcome to the Game"
-puts "Please, enter your name:"
-# user_name = gets.chomp.capitalize
-$user_name = 'Player'
-puts "Hello, #{$user_name}! Lets begin"
+puts "Welcome to the Game!"
 
-def main_interface
+def input_user_name
+  puts "Please, enter your name (minimum 3 characters without digits and spaces):"
   loop do
-    shown_items_numbers = menu_show(MAIN_MENU)
-    menu_player_select_and_execute(MAIN_MENU, shown_items_numbers, 99)
-    break if process_break == 'exit'
-  # rescue
+    $user_name = gets.chomp.capitalize
+    # $user_name = 'Player'
+    # if $user_name =~ /[a-z]{3,}/i
+    #   break
+    # else
+    #   puts "Invalid name format. Please try again"
+    # end
+    $user_name =~ /^[a-z]{3,}$/i ? break : (puts "Invalid name format. Please try again")
   end
+  system 'clear'
+  puts "Hello, #{$user_name}! Lets begin"
+  sleep(1)
 end
 
-def process_break
-  if $menu == 'exit'
-    puts "called_break"
-    $menu = ''
-    'exit'
+def main_interface
+  input_user_name
+  $records = []
+  loop do
+    shown_items_numbers = menu_show(MAIN_MENU)
+    menu_player_select_and_execute(MAIN_MENU, shown_items_numbers, exit_item_number = 99)
+    break if break_was_called
+  # rescue
   end
 end
 
@@ -38,11 +46,12 @@ def menu_show(reference_to_menu)
 end
 
 def format_message(integer, string)
-  format("%<integer>d  %<string>s", { integer: integer, string: string })
+  format("%2<integer>d  %<string>s", { integer: integer, string: string })
 end
 
 def menu_player_select_and_execute(reference_to_menu, shown_items_numbers, exit_item_number)
   menu_user_item_select = gets.to_i
+  system 'clear'
   if menu_user_item_select == exit_item_number
     response_to_user_choose_exit(reference_to_menu)
   elsif shown_items_numbers.include?(menu_user_item_select)
@@ -62,17 +71,33 @@ def menu_execute(reference_to_menu, key)
   reference_to_menu[key][:reference].call
 end
 
+def break_was_called
+  if $menu == 'exit'
+    puts "called_break"
+    $menu = ''
+    return true
+  end
+  false
+end
+
+def show_records
+  puts "Your records:"
+  $records.each { |record| puts record }
+end
+
 def game_interface
   prepare_new_game
   loop do
-    shown_items_numbers = menu_show(GAME_MENU)
-    menu_player_select_and_execute(GAME_MENU, shown_items_numbers, 91)
-    break if process_break == 'exit'
+    shown_items_numbers = game_menu_show(GAME_MENU)
+    menu_player_select_and_execute(GAME_MENU, shown_items_numbers, exit_item_number = 91)
+    break if break_was_called
   # rescue
   end
 end
 
 def prepare_new_game
+  puts "At the beginning you and the Bank have 100 coins"
+  sleep(0.25)
   erase_old_data
   create_default_game_data
   assign_defalut_game_variables
@@ -93,24 +118,53 @@ def create_default_game_data
 end
 
 def assign_defalut_game_variables
-  $actors.each { |_, actor| actor.money = 10 if actor.class == Participant}
+  $actors.each { |_, actor| actor.money = Actor::INITIAL_MONEY if actor.class == Participant}
 end
 
 
 
+def game_menu_show(reference_to_menu)
+  puts "=" * 10
+  shown_items_numbers = []
+  # $actors[:player].money > 0 ? shown_items_numbers.push(menu_item_show(reference_to_menu, 1)) : (puts "-")
+  shown_items_numbers.push(menu_item_show(reference_to_menu, 1)) if all_participant_have_money
+  shown_items_numbers.push(menu_item_show(reference_to_menu, 2))
+  shown_items_numbers.push(menu_item_show(reference_to_menu, 91))
+  shown_items_numbers
+end
 
+def all_participant_have_money
+  if $actors[:player].money == 0
+    puts "--you have no money--"
+    return false
+  elsif $actors[:dealer].money == 0
+    puts "--bank have no money--"
+    return false
+  end
+  true
+end
+
+def user_quit_game
+  record = "#{$actors[:player].name}, money: #{$actors[:player].money}, "
+  record += "in bank: #{$actors[:dealer].money}\n"
+  user_victory_postscript = " as victorious!" if $actors[:dealer].money == 0
+  puts "You choose end this game#{user_victory_postscript}\nYour record: #{record}"
+  $records << record
+  $menu = 'exit'
+  sleep(1)
+end
 
 def round_interface
   preparations_before_rounds
   loop do
     process_new_round_default_actions
     shown_items_numbers = round_menu_show(ROUND_MENU)
-    menu_player_select_and_execute(ROUND_MENU, shown_items_numbers, 91)
-    break if process_break == 'exit'
+    menu_player_select_and_execute(ROUND_MENU, shown_items_numbers, exit_item_number = 91)
+    break if break_was_called
     proceed_user_choise
     # puts "bank money: #{$actors[:bank].money}"
     # p $decisions
-    break if process_break == 'exit'
+    break if break_was_called
     # p $actors[:dealer]
     # p $actors[:player]
   # rescue
@@ -147,6 +201,7 @@ def take_bet
 end
 
 def process_new_round_default_actions
+  sleep(0.25)
   show_participants_cards(:closed, :open)
   $decisions = {}
 end
@@ -201,10 +256,10 @@ end
 def round_menu_show(reference_to_menu)
   puts "=" * 10
   shown_items_numbers = []
-  $actors[:player].pass_count > 0 ? shown_items_numbers.push(menu_item_show(reference_to_menu, 1)) : blank
-  $actors[:player].hand.size < 3 ? shown_items_numbers.push(menu_item_show(reference_to_menu, 2)) : blank
+  $actors[:player].pass_count > 0 ? shown_items_numbers.push(menu_item_show(reference_to_menu, 1)) : (puts "-")
+  $actors[:player].hand.size < 3 ? shown_items_numbers.push(menu_item_show(reference_to_menu, 2)) : (puts "-")
   first_round = $actors[:player].pass_count == 1 && $actors[:player].hand.size == 2
-  first_round ? blank : shown_items_numbers.push(menu_item_show(reference_to_menu, 3))
+  first_round ? (puts "-") : shown_items_numbers.push(menu_item_show(reference_to_menu, 3))
   shown_items_numbers.push(menu_item_show(reference_to_menu, 91))
   shown_items_numbers
 end
@@ -212,10 +267,6 @@ end
 def menu_item_show(reference_to_menu, item_number)
   puts format_message(item_number, reference_to_menu[item_number][:description])
   item_number
-end
-
-def blank
-  puts "-"
 end
 
 def user_passed
@@ -281,6 +332,7 @@ def process_round_conditions
 end
 
 def calculate_round_ending
+  sleep(0.25)
   puts "calculate_round_ending".upcase
   pc_cards_value = $actors[:dealer].calculate_cards_value
   user_cards_value = $actors[:player].calculate_cards_value
@@ -344,15 +396,28 @@ def show_result_for_user(result)
     puts "You get your money back and now have #{$actors[:player].money} coins"
   when :player
     puts "You increase your money and now have #{$actors[:player].money} coins"
+    puts "Now you get the whole bank\'s money!" if $actors[:dealer].money == 0
   when :dealer
     puts "You lose your bet and now have #{$actors[:player].money} coins"
+    puts "Now you have no money to proceed!" if $actors[:player].money == 0
   end
 end
 
 def show_status
-  puts "Name: #{$actors[:player].name}"
-  puts "Money: #{$actors[:player].money}"
-  puts "In Bank: #{$actors[:dealer].money}"
+  puts " Name: #{$actors[:player].name}"
+  puts " Money: #{$actors[:player].money}"
+  puts " In Bank: #{$actors[:dealer].money}"
+
+  puts "////bank: #{$actors[:bank].money}"
+end
+
+def user_quit_round
+  puts "You choose end this round"
+  result = :dealer
+  proceed_money_transfer(result)
+  show_result_for_user(result)
+  $menu = 'exit'
+  sleep(1)
 end
 
 
@@ -365,6 +430,14 @@ MAIN_MENU = {
   1 => {
     description: 'Start a new game',
     reference: method(:game_interface)
+  },
+  2 => {
+    description: 'Show records',
+    reference: method(:show_records)
+  },
+  3 => {
+    description: 'Change your name',
+    reference: method(:input_user_name)
   },
   99 => { description: 'Close programm' },
   exit: { description: "=" * 10 + "\nThe programm will be terminated", action: 'exit' }
@@ -385,7 +458,11 @@ GAME_MENU = {
     reference: method(:show_status)
   },
   91 => { description: 'To main menu' },
-  exit: { description: "=" * 10 + "\nBack to main menu", action: 'exit' }
+  exit: { 
+    description: "=" * 10 + "\nBack to main menu",
+    reference: method(:user_quit_game),
+    action: 'exit'
+  }
 }.freeze
 
 #start new round
@@ -406,7 +483,10 @@ ROUND_MENU = {
     reference: method(:round_ask_show_cards)
   },
   91 => { description: 'To game menu' },
-  exit: { description: "=" * 10 + "\nBack to game menu", action: 'exit' }
+  exit: { 
+    description: "=" * 10 + "\nBack to game menu",
+    reference: method(:user_quit_round),
+    action: 'exit' }
 }.freeze
 
 #pass
@@ -415,3 +495,6 @@ ROUND_MENU = {
 #to game menu
 
 main_interface
+sleep(1.5)
+system 'clear'
+

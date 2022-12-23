@@ -1,5 +1,6 @@
 class Actor
   BET_SIZE = 10
+  INITIAL_MONEY = 100
 
   @all = []
 

@@ -28,6 +28,7 @@ class Participant < Actor
   end
 
   def make_bet(bank)
+    raise "#{@name} doesn\'t have enough money!" if @money == 0
     @money -= BET_SIZE
     bank.take_bet
   end
