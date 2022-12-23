@@ -1,4 +1,8 @@
+require_relative 'all'
+
 class Card
+  self.singleton_class.include All
+  
   @all = []
 
   class << self

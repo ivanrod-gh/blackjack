@@ -1,24 +1,12 @@
+require_relative 'all'
+
 class Actor
+  self.singleton_class.include All
+
   BET_SIZE = 10
   INITIAL_MONEY = 100
 
   @all = []
-
-  class << self
-    attr_reader :all
-
-    def erase_all_instances(key)
-      erase_all_instances! if key == 'new_game'
-    end
-
-    protected
-
-    attr_writer :all
-
-    def erase_all_instances!
-      instance_variable_set(:@all, [])
-    end
-  end
 
   attr_accessor :money
   attr_reader :name, :hand

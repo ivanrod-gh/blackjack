@@ -140,7 +140,7 @@ def user_quit_game
   record = "#{$actors[:player].name}, money: #{$actors[:player].money}, "
   record += "in bank: #{$actors[:dealer].money}\n"
   user_victory_postscript = " as victorious!" if $actors[:dealer].money == 0
-  puts "You choose end this game#{user_victory_postscript}\nYour record: #{record}"
+  puts "You choose end this game#{user_victory_postscript}\n\nYour record: #{record}"
   $records << record
   $menu = 'exit'
   sleep(1)
@@ -416,7 +416,7 @@ GAME_MENU = {
   },
   91 => { description: 'To main menu' },
   exit: { 
-    description: "=" * 10 + "\nBack to main menu",
+    description: "=" * 10,
     reference: method(:user_quit_game),
     action: 'exit'
   }
@@ -437,7 +437,7 @@ ROUND_MENU = {
   },
   91 => { description: 'To game menu' },
   exit: { 
-    description: "=" * 10 + "\nBack to game menu",
+    description: "=" * 10,
     reference: method(:user_quit_round),
     action: 'exit' }
 }.freeze
